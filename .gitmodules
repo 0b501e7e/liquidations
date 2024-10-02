@@ -10,3 +10,6 @@
 [submodule "modules/contract-test-utils"]
 	path = modules/contract-test-utils
 	url = git@github.com:maple-labs/contract-test-utils.git
+[submodule "modules/ironblocks/onchain-firewall"]
+	path = modules/ironblocks/onchain-firewall
+	url = https://github.com/ironblocks/onchain-firewall
