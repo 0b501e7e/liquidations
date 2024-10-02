@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.7;
 
+import {VennFirewallConsumer} from "@ironblocks/firewall-consumer/contracts/consumers/VennFirewallConsumer.sol";
 import { ERC20Helper } from "../modules/erc20-helper/src/ERC20Helper.sol";
 
 import { MapleProxiedInternals } from "../modules/maple-proxy-factory/contracts/MapleProxiedInternals.sol";
@@ -23,7 +24,7 @@ import { LiquidatorStorage } from "./LiquidatorStorage.sol";
 
 */
 
-contract Liquidator is ILiquidator, LiquidatorStorage, MapleProxiedInternals {
+contract Liquidator is VennFirewallConsumer, ILiquidator, LiquidatorStorage, MapleProxiedInternals {
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
@@ -49,18 +50,18 @@ contract Liquidator is ILiquidator, LiquidatorStorage, MapleProxiedInternals {
     /*** Migration Functions                                                                                                            ***/
     /**************************************************************************************************************************************/
 
-    function migrate(address migrator_, bytes calldata arguments_) external override {
+    function migrate(address migrator_, bytes calldata arguments_) external override firewallProtected {
         require(msg.sender == _factory(),        "LIQ:M:NOT_FACTORY");
         require(_migrate(migrator_, arguments_), "LIQ:M:FAILED");
     }
 
-    function setImplementation(address implementation_) external override {
+    function setImplementation(address implementation_) external override firewallProtected {
         require(msg.sender == _factory(), "LIQ:SI:NOT_FACTORY");
 
         _setImplementation(implementation_);
     }
 
-    function upgrade(uint256 version_, bytes calldata arguments_) external override {
+    function upgrade(uint256 version_, bytes calldata arguments_) external override firewallProtected {
         address poolDelegate_ = poolDelegate();
 
         require(msg.sender == poolDelegate_ || msg.sender == governor(), "LIQ:U:NOT_AUTHORIZED");
@@ -81,7 +82,7 @@ contract Liquidator is ILiquidator, LiquidatorStorage, MapleProxiedInternals {
     /**************************************************************************************************************************************/
 
     function liquidatePortion(uint256 collateralAmount_, uint256 maxReturnAmount_, bytes calldata data_)
-        external override whenProtocolNotPaused nonReentrant
+        external override whenProtocolNotPaused nonReentrant firewallProtected
     {
         require(msg.sender != collateralAsset && msg.sender != fundsAsset, "LIQ:LP:INVALID_CALLER");
 
@@ -103,7 +104,7 @@ contract Liquidator is ILiquidator, LiquidatorStorage, MapleProxiedInternals {
         require(ERC20Helper.transferFrom(fundsAsset, msg.sender, address(this), returnAmount_), "LIQ:LP:TRANSFER_FROM");
     }
 
-    function pullFunds(address token_, address destination_, uint256 amount_) external override {
+    function pullFunds(address token_, address destination_, uint256 amount_) external override firewallProtected {
         require(msg.sender == loanManager, "LIQ:PF:NOT_LM");
 
         emit FundsPulled(token_, destination_, amount_);
@@ -111,7 +112,7 @@ contract Liquidator is ILiquidator, LiquidatorStorage, MapleProxiedInternals {
         require(ERC20Helper.transfer(token_, destination_, amount_), "LIQ:PF:TRANSFER");
     }
 
-    function setCollateralRemaining(uint256 collateralAmount_) external override {
+    function setCollateralRemaining(uint256 collateralAmount_) external override firewallProtected {
         require(msg.sender == loanManager, "LIQ:SCR:NOT_LM");
 
         collateralRemaining = collateralAmount_;
